@@ -7,6 +7,7 @@ import (
 
 func RouteInit(route *fiber.App) {
 
+	route.Static("/public", "./public/asset")
 	userHandler := handlers.UserHandler{}
 
 	api := route.Group("/api")
