@@ -6,18 +6,15 @@ import (
 )
 
 func RouteInit(route *fiber.App) {
+
 	userHandler := handlers.UserHandler{}
 
-	route.Get("/", userHandler.All)
-	route.Get("/:id", userHandler.GetById)
-	route.Post("/create", userHandler.Create)
+	api := route.Group("/api")
 
-	//route.Post("/create", func(ctx *fiber.Ctx) error {
-	//	name := ctx.FormValue("name")
-	//
-	//	return ctx.JSON(fiber.Map{
-	//		"name": name,
-	//	})
-	//})
+	api.Get("/", userHandler.All)
+	api.Get("getById/:id", userHandler.GetById)
+	api.Post("/create", userHandler.Create)
+	api.Put("update/:id", userHandler.Update)
+	api.Delete("delete/:id", userHandler.Delete)
 
 }

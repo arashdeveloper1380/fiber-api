@@ -70,5 +70,92 @@ func (uh *UserHandler) Create(ctx *fiber.Ctx) error {
 }
 
 func (uh *UserHandler) GetById(ctx *fiber.Ctx) error {
-	return nil
+	userId := ctx.Params("id")
+
+	var user models.User
+
+	err := database.DB.First(&user, userId).Error
+	if err != nil {
+		return ctx.Status(404).JSON(fiber.Map{
+			"user": []string{},
+		})
+	}
+	return ctx.JSON(fiber.Map{
+		"data": user,
+	})
+}
+
+func (uh *UserHandler) Update(ctx *fiber.Ctx) error {
+
+	userId := ctx.Params("id")
+
+	updateReq := new(requests.UpdateCreateRequest)
+
+	err := ctx.BodyParser(updateReq)
+
+	if err != nil {
+		return ctx.Status(400).JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+
+	var user models.User
+
+	validate := validator.New()
+	errValidate := validate.Struct(updateReq)
+
+	if errValidate != nil {
+		return ctx.Status(500).JSON(fiber.Map{
+			"error": errValidate.Error(),
+		})
+	}
+
+	errFind := database.DB.First(&user, userId).Error
+
+	if errFind != nil {
+		return ctx.Status(404).JSON(fiber.Map{
+			"data": []string{},
+		})
+	}
+
+	if updateReq.Name != "" {
+		user.Name = updateReq.Name
+	}
+	user.Address = updateReq.Address
+	user.Phone = updateReq.Phone
+
+	errUpdate := database.DB.Save(&user).Error
+	if errUpdate != nil {
+		return ctx.Status(500).JSON(fiber.Map{
+			"error": errUpdate.Error(),
+		})
+	}
+
+	return ctx.JSON(fiber.Map{
+		"data": user,
+	})
+}
+
+func (uh *UserHandler) Delete(ctx *fiber.Ctx) error {
+	userId := ctx.Params("id")
+
+	var user models.User
+
+	errFound := database.DB.Debug().First(&user, userId).Error
+	if errFound != nil {
+		return ctx.Status(404).JSON(fiber.Map{
+			"message": errFound.Error(),
+		})
+	}
+
+	errDelete := database.DB.Debug().Delete(&user).Error
+	if errDelete != nil {
+		return ctx.Status(404).JSON(fiber.Map{
+			"message": errDelete.Error(),
+		})
+	}
+
+	return ctx.Status(200).JSON(fiber.Map{
+		"message": "user was deleted",
+	})
 }
