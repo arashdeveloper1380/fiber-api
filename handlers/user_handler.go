@@ -4,8 +4,10 @@ import (
 	"crud-api-fiber/database"
 	"crud-api-fiber/models"
 	"crud-api-fiber/requests"
+	"crud-api-fiber/utils"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"log"
 )
 
 type UserHandler struct{}
@@ -51,6 +53,15 @@ func (uh *UserHandler) Create(ctx *fiber.Ctx) error {
 		Address: user.Address,
 		Phone:   user.Phone,
 	}
+
+	hashPass, err := utils.HashingPassword(user.Password)
+	if err != nil {
+		log.Println(err)
+		return ctx.Status(400).JSON(fiber.Map{
+			"message": "not generate pass",
+		})
+	}
+	newUser.Password = hashPass
 
 	err = database.DB.Create(&newUser).Error
 	if err != nil {
