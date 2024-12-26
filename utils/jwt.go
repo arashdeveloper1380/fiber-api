@@ -1,6 +1,9 @@
 package utils
 
-import "github.com/golang-jwt/jwt/v5"
+import (
+	"fmt"
+	"github.com/golang-jwt/jwt/v5"
+)
 
 var SecretKey = []byte("arash_developer1380")
 
@@ -13,4 +16,20 @@ func GenerateJWT(claims *jwt.MapClaims) (string, error) {
 	}
 
 	return webToken, err
+}
+
+func VerifyToken(tokenString string) (*jwt.Token, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, isValid := token.Method.(*jwt.SigningMethodHMAC); !isValid {
+			return nil, fmt.Errorf("UnExpected signing method %v", token.Header["alg"])
+		}
+
+		return []byte(SecretKey), nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return token, nil
 }

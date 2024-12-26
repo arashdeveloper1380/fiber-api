@@ -21,6 +21,6 @@ func RouteInit(route *fiber.App) {
 	api.Put("update/:id", userHandler.Update)
 	api.Delete("delete/:id", userHandler.Delete)
 
-	api.Post("/login", middlewares.XToken, AuthHandler.Login)
+	api.Post("/login", AuthHandler.Login)
 
 }
