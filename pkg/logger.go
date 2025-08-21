@@ -37,8 +37,7 @@ func Factory(loggerType string) Logger {
 func FactoryWithT(t Logger) Logger {
 	if t == new(ConsoleLogger) {
 		return &ConsoleLogger{}
-	}
-	else if t == new(FileLogger) {
+	} else if t == new(FileLogger) {
 		return &FileLogger{}
 	}
 
