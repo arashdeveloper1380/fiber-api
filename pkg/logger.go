@@ -34,7 +34,23 @@ func Factory(loggerType string) Logger {
 	return nil
 }
 
+func FactoryWithT(t Logger) Logger {
+	if t == new(ConsoleLogger) {
+		return &ConsoleLogger{}
+	}
+	else if t == new(FileLogger) {
+		return &FileLogger{}
+	}
+
+	return nil
+}
+
 func selectLogger() {
 	logger := Factory("console")
 	logger.Log("this is sample log")
+}
+
+func selectLoggerWithT() {
+	logger := FactoryWithT(&ConsoleLogger{})
+	logger.Log("test with T")
 }
