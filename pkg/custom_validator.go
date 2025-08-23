@@ -8,6 +8,22 @@ import (
 	"strings"
 )
 
+type ValidationError struct {
+	Field string
+	Rule  string
+	Msg   string
+}
+
+type ValidationErrors []ValidationError
+
+func (ve ValidationErrors) Error() string {
+	var sb strings.Builder
+	for _, e := range ve {
+		sb.WriteString(fmt.Sprintf("Field '%s' failed on '%s': %s\n", e.Field, e.Rule, e.Msg))
+	}
+	return sb.String()
+}
+
 func ValidationStruct(s interface{}) error {
 	t := reflect.TypeOf(s)
 	v := reflect.ValueOf(s)
@@ -15,6 +31,8 @@ func ValidationStruct(s interface{}) error {
 	if t.Kind() != reflect.Struct {
 		return errors.New("input must be a struct")
 	}
+
+	var errs ValidationErrors
 
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
@@ -37,15 +55,15 @@ func ValidationStruct(s interface{}) error {
 				switch key {
 				case "min":
 					if err := checkMin(value, param, field.Name); err != nil {
-						return err
+						errs = append(errs, ValidationError{field.Name, "min", err.Error()})
 					}
 				case "max":
 					if err := checkMax(value, param, field.Name); err != nil {
-						return err
+						errs = append(errs, ValidationError{field.Name, "max", err.Error()})
 					}
 				case "len":
 					if err := checkLen(value, param, field.Name); err != nil {
-						return err
+						errs = append(errs, ValidationError{field.Name, "len", err.Error()})
 					}
 				}
 				continue
@@ -54,18 +72,22 @@ func ValidationStruct(s interface{}) error {
 			switch rule {
 			case "required":
 				if isEmpty(value) {
-					return fmt.Errorf("field '%s' is required ", field.Name)
+					errs = append(errs, ValidationError{field.Name, "required", "field is required"})
 				}
 			case "positive":
 				if value.Kind() == reflect.Int && value.Int() <= 0 {
-					return fmt.Errorf("field '%s' must be positive", field.Name)
+					errs = append(errs, ValidationError{field.Name, "positive", "must be positive"})
 				}
 			case "email":
 				if value.Kind() == reflect.String && !strings.Contains(value.String(), "@") {
-					return fmt.Errorf("field '%s' must be a valid email", field.Name)
+					errs = append(errs, ValidationError{field.Name, "email", "must be a valid email"})
 				}
 			}
 		}
+	}
+
+	if len(errs) > 0 {
+		return errs
 	}
 
 	return nil
@@ -126,16 +148,22 @@ func checkLen(v reflect.Value, param, fieldName string) error {
 }
 
 type InfoUser struct {
-	Name  string `arash_validate:"required"`
-	Age   int    `arash_validate:"required,positive"`
-	Email string `arash_validate:"required,email"`
+	Name  string   `arash_validate:"required"`
+	Age   int      `arash_validate:"required,positive,min=18,max=100"`
+	Email string   `arash_validate:"required,email"`
+	Tags  []string `arash_validate:"min=3,max=5"`
 }
 
 func CustomValidate() {
-	info := InfoUser{"arash", 25, "arashgmail.com"}
+	info := InfoUser{
+		Name:  "arash",
+		Age:   15,
+		Email: "arash@gmail.com",
+		Tags:  []string{"go", "reflect"},
+	}
 
 	if err := ValidationStruct(info); err != nil {
-		fmt.Println("❌ Validation error:", err)
+		fmt.Println("❌ Validation error:\n", err)
 	} else {
 		fmt.Println("✅ info is valid")
 	}
