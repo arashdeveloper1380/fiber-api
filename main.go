@@ -31,4 +31,6 @@ func main() {
 
 	pkg.GetStructPropertyTags()
 
+	pkg.CustomValidate()
+
 }
